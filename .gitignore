@@ -1,3 +1,12 @@
+# Node modules
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
 # Gradle files
 .gradle/
 build/
@@ -32,3 +41,16 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+coverage/
+
+# macOS
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
