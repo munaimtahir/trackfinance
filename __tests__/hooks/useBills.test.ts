@@ -8,6 +8,10 @@ import * as billsService from '../../services/bills';
 import type { Bill } from '../../types';
 
 jest.mock('../../services/bills');
+jest.mock('../../services/notificationHelpers', () => ({
+  getChildUserId: jest.fn().mockResolvedValue('child-123'),
+  getFatherUserId: jest.fn().mockResolvedValue('father-123'),
+}));
 jest.mock('../../app/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'test-user-id' } }),
 }));
@@ -128,7 +132,7 @@ describe('Bills Hooks', () => {
 
       expect(billsService.markBillAsPaid).toHaveBeenCalledWith('bill-123', 'test-user-id', {
         payerNote: 'Paid',
-      });
+      }, 'father-123');
       expect(result.current.error).toBeNull();
     });
 

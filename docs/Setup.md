@@ -28,7 +28,10 @@
 
    ### Cloud Messaging (FCM)
    - FCM is automatically enabled for push notifications
-   - Device tokens will be stored in the `users` collection (notifications implemented in later phase)
+   - Device tokens will be stored in the `users` collection
+   - **Notifications are now implemented!** The app uses Expo Push Notifications
+   - For Android: No additional configuration needed for Expo Go
+   - For standalone builds: Follow Expo's [push notification setup guide](https://docs.expo.dev/push-notifications/push-notifications-setup/)
 
 3. Get your Firebase configuration:
    - Go to Project Settings → General
@@ -110,6 +113,41 @@ Type check:
 ```bash
 npm run type-check
 ```
+
+## Push Notifications Setup
+
+The app uses Expo Push Notifications for real-time alerts.
+
+### How It Works
+
+1. **On App Launch**: When a user logs in, the app requests push notification permissions and registers their device token with Firebase.
+
+2. **New Bill Notification**: When the father creates a bill, a push notification is sent to the child's device(s) with the title "New Bill Added 💰".
+
+3. **Bill Paid Notification**: When the child marks a bill as paid, a push notification is sent to the father's device(s) with the title "Bill Paid ✅".
+
+### Testing Notifications
+
+1. **Development with Expo Go**:
+   - Install Expo Go on two physical devices (notifications don't work on simulators)
+   - Sign in as father on one device and child on the other
+   - Create a bill as father → child should receive notification
+   - Mark bill as paid as child → father should receive notification
+
+2. **Production Build**:
+   - For standalone Android/iOS builds, follow [Expo's push notification setup](https://docs.expo.dev/push-notifications/push-notifications-setup/)
+   - Configure FCM credentials for Android
+   - Configure APNs credentials for iOS
+
+### Alternative: Cloud Functions (Optional)
+
+For production use, consider deploying the Cloud Functions in `/functions` directory for:
+- Better reliability
+- Enhanced security
+- Server-side notification handling
+- Ability to handle complex notification logic
+
+See `/functions/README.md` for deployment instructions.
 
 ## Troubleshooting
 

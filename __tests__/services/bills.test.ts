@@ -16,6 +16,7 @@ import type { CreateBillPayload, MarkPaidPayload } from '../../types';
 jest.mock('firebase/firestore');
 jest.mock('../../services/firebaseApp');
 jest.mock('../../services/storage');
+jest.mock('../../services/notifications');
 
 describe('Bills Service', () => {
   const mockFirestore = {} as firestore.Firestore;

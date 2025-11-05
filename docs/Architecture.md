@@ -38,16 +38,21 @@ The app is a thin client over Firebase, with most persistent state in Firestore.
      - `useCurrentUser`
      - `useBills({ status })`
      - `useBill(id)`
+     - `useNotifications` - handles push notification registration and listeners
    - Actions:
-     - `useCreateBill`
-     - `useMarkBillPaid`
+     - `useCreateBill` - creates bills and triggers notifications to child
+     - `useMarkBillPaid` - marks bills paid and triggers notifications to father
    - These hooks call a `services/firebase` layer with Firestore/Storage SDKs.
 
 4. **Notifications**
    - Use Expo Notifications with FCM integration.
    - Store device tokens in `users` collection.
-   - On new bill / bill paid:
-     - Call a Cloud Function or serverless endpoint to send push notification.
+   - On new bill creation:
+     - Service looks up child user and sends notification to their device tokens
+   - On bill marked as paid:
+     - Service looks up father user and sends notification to their device tokens
+   - Client-side push notification sending via Expo Push API (MVP implementation)
+   - Optional Cloud Functions for server-side handling (see `/functions` directory)
 
 5. **Configuration**
    - Firebase config and project IDs live in environment variables / config files.
