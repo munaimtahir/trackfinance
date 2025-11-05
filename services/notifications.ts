@@ -44,8 +44,14 @@ export async function registerForPushNotifications(userId: string): Promise<stri
   }
 
   // Get the Expo push token
+  const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+  if (!projectId) {
+    console.error('EXPO_PUBLIC_FIREBASE_PROJECT_ID is not configured');
+    return null;
+  }
+  
   const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+    projectId,
   });
   const token = tokenData.data;
 
@@ -148,6 +154,11 @@ export async function prepareBillPaidNotification(
 }
 
 /**
+ * Expo Push API endpoint
+ */
+const EXPO_PUSH_API_URL = 'https://exp.host/--/api/v2/push/send';
+
+/**
  * Send push notification via Expo Push API
  * This is a helper function - in production, call this from a secure backend
  */
@@ -163,7 +174,7 @@ export async function sendPushNotification(
   }));
 
   try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    const response = await fetch(EXPO_PUSH_API_URL, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

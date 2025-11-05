@@ -16,11 +16,13 @@ export async function getOtherUser(currentUserId: string, targetRole: UserRole):
     const firestore = getFirebaseFirestore();
     const usersRef = collection(firestore, 'users');
     
-    // Query for a user with the target role that is not the current user
+    // Query for a user with the target role (the query will return users,
+    // and we'll filter out the current user below since Firestore doesn't
+    // support != operator in queries)
     const q = query(
       usersRef,
       where('role', '==', targetRole),
-      limit(1)
+      limit(2) // Get 2 to check if current user is returned
     );
     
     const querySnapshot = await getDocs(q);
@@ -29,16 +31,16 @@ export async function getOtherUser(currentUserId: string, targetRole: UserRole):
       return null;
     }
     
-    // Get the first user with the target role
-    const otherUserDoc = querySnapshot.docs[0];
-    const otherUserId = otherUserDoc.id;
-    
-    // Make sure it's not the current user
-    if (otherUserId === currentUserId) {
-      return null;
+    // Find a user that is not the current user
+    for (const doc of querySnapshot.docs) {
+      const userId = doc.id;
+      if (userId !== currentUserId) {
+        return userId;
+      }
     }
     
-    return otherUserId;
+    // No other user found
+    return null;
   } catch (error) {
     console.error('Failed to get other user:', error);
     return null;

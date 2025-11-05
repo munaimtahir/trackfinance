@@ -25,8 +25,13 @@ jest.mock('react-native', () => ({
 }));
 
 describe('Notifications Service', () => {
+  const originalEnv = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+  
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Set up environment variable for tests
+    process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
     
     // Reset Device.isDevice to true by default
     Object.defineProperty(Device, 'isDevice', {
@@ -34,6 +39,15 @@ describe('Notifications Service', () => {
       writable: true,
       configurable: true,
     });
+  });
+  
+  afterEach(() => {
+    // Restore original env
+    if (originalEnv) {
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = originalEnv;
+    } else {
+      delete process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+    }
   });
 
   describe('registerForPushNotifications', () => {
