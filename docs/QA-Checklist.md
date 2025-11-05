@@ -86,9 +86,13 @@
 - [ ] App handles permission denials for camera/gallery
 - [ ] Failed uploads don't create incomplete bills
 
-## Notifications (Future Phase)
-- [ ] Child receives a notification when a bill is created
-- [ ] Father receives a notification when bill is marked paid (if enabled)
+## Notifications
+- [x] Child receives a notification when a bill is created
+- [x] Father receives a notification when bill is marked paid
+- [x] Users can register for push notifications on app startup
+- [x] Device tokens are stored in user profiles
+- [x] Notifications are sent via Expo Push API (client-side for MVP)
+- [ ] (Optional) Cloud Functions for server-side notification handling
 
 ## Offline Support (Future Phase)
 - [ ] If father is offline, app allows capturing a bill
