@@ -88,7 +88,10 @@ describe('Auth Service', () => {
 
   describe('getCurrentUser', () => {
     it('should return the current authenticated user', () => {
-      mockAuth.currentUser = mockUser;
+      Object.defineProperty(mockAuth, 'currentUser', {
+        value: mockUser,
+        writable: true,
+      });
 
       const result = getCurrentUser();
 
@@ -100,7 +103,10 @@ describe('Auth Service', () => {
     });
 
     it('should return null if no user is authenticated', () => {
-      mockAuth.currentUser = null;
+      Object.defineProperty(mockAuth, 'currentUser', {
+        value: null,
+        writable: true,
+      });
 
       const result = getCurrentUser();
 

@@ -32,9 +32,7 @@ describe('Bills Hooks', () => {
         },
       ];
 
-      let callback: (bills: Bill[]) => void = () => {};
-      (billsService.subscribeToBillsByStatus as jest.Mock).mockImplementation((status, cb) => {
-        callback = cb;
+      (billsService.subscribeToBillsByStatus as jest.Mock).mockImplementation((_status, cb) => {
         setTimeout(() => cb(mockBills), 0);
         return jest.fn();
       });
