@@ -16,6 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '../components/Button';
 import { useCreateBill } from '../hooks/useBills';
+import { useCurrentUser } from '../hooks/useUser';
 import type { CreateBillPayload } from '../../types';
 
 export function HomeScreen() {
@@ -24,6 +25,9 @@ export function HomeScreen() {
   const [amount, setAmount] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const { createBill, loading } = useCreateBill();
+  const { userProfile } = useCurrentUser();
+
+  const isFather = userProfile?.role === 'father';
 
   const pickImage = async () => {
     // Request permissions
@@ -86,7 +90,7 @@ export function HomeScreen() {
 
     try {
       await createBill(payload);
-      Alert.alert('Success', 'Bill created successfully');
+      Alert.alert('Success', 'Bill created successfully ✅');
       // Reset form
       setTitle('');
       setDescription('');
@@ -96,6 +100,21 @@ export function HomeScreen() {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create bill');
     }
   };
+
+  // Show message for child users
+  if (!isFather) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.childMessageContainer}>
+          <Text style={styles.childMessageTitle}>👤 Child View</Text>
+          <Text style={styles.childMessage}>
+            Only the father can add new bills.{'\n\n'}
+            You can view and manage bills in the "Bills" tab.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -197,5 +216,24 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 8,
+  },
+  childMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  childMessageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  childMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
