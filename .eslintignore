@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+build/
+.expo/
+.expo-shared/
+jest.setup.js
+babel.config.js
+__mocks__/
