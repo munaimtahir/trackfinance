@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrentUser } from '../hooks/useUser';
+import { useNotificationRegistration } from '../hooks/useNotifications';
 import { LoginScreen } from '../screens/LoginScreen';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -48,6 +49,9 @@ function MainTabs() {
 function AppNavigator() {
   const { user, loading: authLoading } = useAuth();
   const { userProfile, loading: profileLoading, refresh } = useCurrentUser();
+  
+  // Register for push notifications when user is authenticated
+  useNotificationRegistration();
 
   if (authLoading || (user && profileLoading)) {
     return null; // Could show a loading screen here

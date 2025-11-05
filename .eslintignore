@@ -7,3 +7,4 @@ build/
 jest.setup.js
 babel.config.js
 __mocks__/
+functions/
