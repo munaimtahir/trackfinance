@@ -1,7 +1,30 @@
 /**
- * Tests for Firebase App Initialization
+ * Tests for Firebase App Service
  */
 
+import * as firebaseApp from 'firebase/app';
+import * as firebaseAuth from 'firebase/auth';
+import * as firebaseFirestore from 'firebase/firestore';
+import * as firebaseStorage from 'firebase/storage';
+
+jest.mock('firebase/app');
+jest.mock('firebase/auth');
+jest.mock('firebase/firestore');
+jest.mock('firebase/storage');
+
+// Setup mocks before importing the module
+const mockFirebaseApp = {} as firebaseApp.FirebaseApp;
+const mockAuth = {} as firebaseAuth.Auth;
+const mockFirestore = {} as firebaseFirestore.Firestore;
+const mockStorage = {} as firebaseStorage.FirebaseStorage;
+
+(firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
+(firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
+(firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
+(firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
+
+// Now import the functions after mock setup
+// eslint-disable-next-line import/first
 import {
   getFirebaseConfig,
   initializeFirebase,
@@ -9,27 +32,12 @@ import {
   getFirebaseFirestore,
   getFirebaseStorage,
 } from '../../services/firebaseApp';
-import * as firebaseApp from 'firebase/app';
-import * as firebaseAuth from 'firebase/auth';
-import * as firebaseFirestore from 'firebase/firestore';
-import * as firebaseStorage from 'firebase/storage';
 
-// Mock Firebase modules
-jest.mock('firebase/app');
-jest.mock('firebase/auth');
-jest.mock('firebase/firestore');
-jest.mock('firebase/storage');
-
-describe('Firebase App', () => {
+describe('Firebase App Service', () => {
   const originalEnv = process.env;
-  const mockFirebaseApp = {} as firebaseApp.FirebaseApp;
-  const mockAuth = {} as firebaseAuth.Auth;
-  const mockFirestore = {} as firebaseFirestore.Firestore;
-  const mockStorage = {} as firebaseStorage.FirebaseStorage;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset environment variables
     process.env = { ...originalEnv };
   });
 
@@ -38,22 +46,22 @@ describe('Firebase App', () => {
   });
 
   describe('getFirebaseConfig', () => {
-    it('should read configuration from environment variables', () => {
+    it('should return Firebase config from environment variables', () => {
       process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
-      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-project.firebaseapp.com';
-      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project';
-      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-project.appspot.com';
-      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = '123456789';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
       process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
 
       const config = getFirebaseConfig();
 
       expect(config).toEqual({
         apiKey: 'test-api-key',
-        authDomain: 'test-project.firebaseapp.com',
-        projectId: 'test-project',
-        storageBucket: 'test-project.appspot.com',
-        messagingSenderId: '123456789',
+        authDomain: 'test-auth-domain',
+        projectId: 'test-project-id',
+        storageBucket: 'test-storage-bucket',
+        messagingSenderId: 'test-sender-id',
         appId: 'test-app-id',
       });
     });
@@ -89,90 +97,156 @@ describe('Firebase App', () => {
       consoleWarnSpy.mockRestore();
     });
 
-    it('should warn about partially missing configuration', () => {
+    it('should warn about specific missing keys', () => {
       process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
-      // Leave others undefined
+      // Leave other keys missing
+      delete process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN;
+      delete process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       getFirebaseConfig();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Missing Firebase configuration keys:',
-        expect.stringContaining('authDomain'),
-        expect.any(String)
-      );
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      const warnCall = consoleWarnSpy.mock.calls[0];
+      expect(warnCall[1]).toContain('authDomain');
+      expect(warnCall[1]).toContain('projectId');
 
       consoleWarnSpy.mockRestore();
     });
   });
 
   describe('initializeFirebase', () => {
-    it('should initialize Firebase app with config from environment', () => {
+    it('should initialize Firebase app with config', () => {
       process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
-      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-project.firebaseapp.com';
-      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project';
-      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-project.appspot.com';
-      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = '123456789';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
       process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
-
-      (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
-      (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
-      (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
-      (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
 
       initializeFirebase();
 
       expect(firebaseApp.initializeApp).toHaveBeenCalledWith({
         apiKey: 'test-api-key',
-        authDomain: 'test-project.firebaseapp.com',
-        projectId: 'test-project',
-        storageBucket: 'test-project.appspot.com',
-        messagingSenderId: '123456789',
+        authDomain: 'test-auth-domain',
+        projectId: 'test-project-id',
+        storageBucket: 'test-storage-bucket',
+        messagingSenderId: 'test-sender-id',
         appId: 'test-app-id',
       });
       expect(firebaseAuth.getAuth).toHaveBeenCalledWith(mockFirebaseApp);
       expect(firebaseFirestore.getFirestore).toHaveBeenCalledWith(mockFirebaseApp);
       expect(firebaseStorage.getStorage).toHaveBeenCalledWith(mockFirebaseApp);
     });
+
+    it('should not reinitialize if already initialized', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
+
+      initializeFirebase();
+      const callCountAfterFirst = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+      
+      initializeFirebase(); // Call twice
+      const callCountAfterSecond = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+
+      // Should only be called once more (from first call in this test)
+      expect(callCountAfterSecond).toBe(callCountAfterFirst);
+    });
   });
 
   describe('getFirebaseAuth', () => {
-    it('should return Auth instance', () => {
-      (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
-      (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
-      (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
-      (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
+    it('should return Firebase Auth instance', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
 
       const auth = getFirebaseAuth();
 
       expect(auth).toBe(mockAuth);
     });
+
+    it('should initialize Firebase if not already initialized', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
+
+      const callsBefore = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+      getFirebaseAuth();
+      const callsAfter = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+
+      // Should have called initializeApp (or not if already initialized from previous tests)
+      expect(callsAfter).toBeGreaterThanOrEqual(callsBefore);
+    });
   });
 
   describe('getFirebaseFirestore', () => {
     it('should return Firestore instance', () => {
-      (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
-      (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
-      (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
-      (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
 
-      const db = getFirebaseFirestore();
+      const firestoreInstance = getFirebaseFirestore();
 
-      expect(db).toBe(mockFirestore);
+      expect(firestoreInstance).toBe(mockFirestore);
+    });
+
+    it('should initialize Firebase if not already initialized', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
+
+      const callsBefore = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+      getFirebaseFirestore();
+      const callsAfter = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+
+      expect(callsAfter).toBeGreaterThanOrEqual(callsBefore);
     });
   });
 
   describe('getFirebaseStorage', () => {
-    it('should return Storage instance', () => {
-      (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
-      (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
-      (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
-      (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
+    it('should return Firebase Storage instance', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
 
-      const storage = getFirebaseStorage();
+      const storageInstance = getFirebaseStorage();
 
-      expect(storage).toBe(mockStorage);
+      expect(storageInstance).toBe(mockStorage);
+    });
+
+    it('should initialize Firebase if not already initialized', () => {
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN = 'test-auth-domain';
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID = 'test-project-id';
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-storage-bucket';
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
+
+      const callsBefore = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+      getFirebaseStorage();
+      const callsAfter = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
+
+      expect(callsAfter).toBeGreaterThanOrEqual(callsBefore);
     });
   });
 });

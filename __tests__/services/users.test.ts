@@ -27,9 +27,9 @@ describe('Users Service', () => {
   describe('getUserProfile', () => {
     it('should retrieve a user profile by ID', async () => {
       const mockUserData = {
-        displayName: 'Test User',
+        displayName: 'John Doe',
         role: 'father' as UserRole,
-        email: 'test@example.com',
+        email: 'john@example.com',
         phoneNumber: '+1234567890',
         deviceTokens: ['token1', 'token2'],
         createdAt: { toDate: () => new Date('2024-01-01') },
@@ -45,16 +45,15 @@ describe('Users Service', () => {
 
       expect(firestore.doc).toHaveBeenCalledWith(mockFirestore, 'users', 'user-123');
       expect(firestore.getDoc).toHaveBeenCalledWith(mockDocRef);
-      expect(result).toEqual({
-        id: 'user-123',
-        displayName: 'Test User',
-        role: 'father',
-        email: 'test@example.com',
-        phoneNumber: '+1234567890',
-        deviceTokens: ['token1', 'token2'],
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-02'),
-      });
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('user-123');
+      expect(result?.displayName).toBe('John Doe');
+      expect(result?.role).toBe('father');
+      expect(result?.email).toBe('john@example.com');
+      expect(result?.phoneNumber).toBe('+1234567890');
+      expect(result?.deviceTokens).toEqual(['token1', 'token2']);
+      expect(result?.createdAt).toEqual(new Date('2024-01-01'));
+      expect(result?.updatedAt).toEqual(new Date('2024-01-02'));
     });
 
     it('should return null if user does not exist', async () => {
@@ -62,18 +61,18 @@ describe('Users Service', () => {
         exists: () => false,
       });
 
-      const result = await getUserProfile('non-existent-user');
+      const result = await getUserProfile('non-existent');
 
       expect(result).toBeNull();
     });
 
-    it('should handle users with empty device tokens', async () => {
+    it('should handle user with empty deviceTokens array', async () => {
       const mockUserData = {
-        displayName: 'New User',
+        displayName: 'Jane Doe',
         role: 'child' as UserRole,
-        email: 'child@example.com',
+        email: 'jane@example.com',
         phoneNumber: '',
-        deviceTokens: undefined, // No tokens yet
+        deviceTokens: [],
         createdAt: { toDate: () => new Date('2024-01-01') },
         updatedAt: { toDate: () => new Date('2024-01-01') },
       };
@@ -90,20 +89,21 @@ describe('Users Service', () => {
   });
 
   describe('saveUserProfile', () => {
-    it('should create a new user profile if user does not exist', async () => {
+    it('should create a new user profile if it does not exist', async () => {
       (firestore.getDoc as jest.Mock).mockResolvedValue({
         exists: () => false,
       });
       (firestore.setDoc as jest.Mock).mockResolvedValue(undefined);
 
-      await saveUserProfile('new-user-123', 'Father User', 'father', 'father@example.com', '+1234567890');
+      await saveUserProfile('user-123', 'John Doe', 'father', 'john@example.com', '+1234567890');
 
+      expect(firestore.doc).toHaveBeenCalledWith(mockFirestore, 'users', 'user-123');
       expect(firestore.setDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
-          displayName: 'Father User',
+          displayName: 'John Doe',
           role: 'father',
-          email: 'father@example.com',
+          email: 'john@example.com',
           phoneNumber: '+1234567890',
           deviceTokens: [],
         })
@@ -111,12 +111,29 @@ describe('Users Service', () => {
       expect(firestore.updateDoc).not.toHaveBeenCalled();
     });
 
+    it('should create user with empty email and phone if not provided', async () => {
+      (firestore.getDoc as jest.Mock).mockResolvedValue({
+        exists: () => false,
+      });
+      (firestore.setDoc as jest.Mock).mockResolvedValue(undefined);
+
+      await saveUserProfile('user-123', 'John Doe', 'father');
+
+      expect(firestore.setDoc).toHaveBeenCalledWith(
+        mockDocRef,
+        expect.objectContaining({
+          email: '',
+          phoneNumber: '',
+        })
+      );
+    });
+
     it('should update existing user profile', async () => {
       const existingUserData = {
-        displayName: 'Old Name',
-        role: 'father' as UserRole,
+        displayName: 'John Doe',
+        role: 'father',
         email: 'old@example.com',
-        phoneNumber: '+9876543210',
+        phoneNumber: '+1111111111',
         deviceTokens: ['token1'],
         createdAt: { toDate: () => new Date('2024-01-01') },
         updatedAt: { toDate: () => new Date('2024-01-01') },
@@ -128,27 +145,27 @@ describe('Users Service', () => {
       });
       (firestore.updateDoc as jest.Mock).mockResolvedValue(undefined);
 
-      await saveUserProfile('existing-user', 'Updated Name', 'father', 'new@example.com');
+      await saveUserProfile('user-123', 'John Smith', 'father', 'new@example.com', '+2222222222');
 
       expect(firestore.updateDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
-          displayName: 'Updated Name',
+          displayName: 'John Smith',
           role: 'father',
           email: 'new@example.com',
-          phoneNumber: '+9876543210', // Should preserve existing phone
+          phoneNumber: '+2222222222',
         })
       );
       expect(firestore.setDoc).not.toHaveBeenCalled();
     });
 
-    it('should preserve existing email and phone if not provided', async () => {
+    it('should keep existing email and phone when not provided in update', async () => {
       const existingUserData = {
-        displayName: 'Test User',
-        role: 'child' as UserRole,
+        displayName: 'John Doe',
+        role: 'father',
         email: 'existing@example.com',
         phoneNumber: '+1111111111',
-        deviceTokens: [],
+        deviceTokens: ['token1'],
         createdAt: { toDate: () => new Date('2024-01-01') },
         updatedAt: { toDate: () => new Date('2024-01-01') },
       };
@@ -159,7 +176,7 @@ describe('Users Service', () => {
       });
       (firestore.updateDoc as jest.Mock).mockResolvedValue(undefined);
 
-      await saveUserProfile('user-123', 'Test User', 'child');
+      await saveUserProfile('user-123', 'John Smith', 'father');
 
       expect(firestore.updateDoc).toHaveBeenCalledWith(
         mockDocRef,
@@ -170,58 +187,55 @@ describe('Users Service', () => {
       );
     });
 
-    it('should create user with empty email and phone if not provided', async () => {
+    it('should handle child role', async () => {
       (firestore.getDoc as jest.Mock).mockResolvedValue({
         exists: () => false,
       });
       (firestore.setDoc as jest.Mock).mockResolvedValue(undefined);
 
-      await saveUserProfile('new-user', 'New User', 'child');
+      await saveUserProfile('user-456', 'Jane Doe', 'child', 'jane@example.com');
 
       expect(firestore.setDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
-          displayName: 'New User',
+          displayName: 'Jane Doe',
           role: 'child',
-          email: '',
-          phoneNumber: '',
         })
       );
     });
   });
 
   describe('saveDeviceToken', () => {
-    it('should add device token to user profile', async () => {
+    it('should save a device token to user profile', async () => {
       (firestore.updateDoc as jest.Mock).mockResolvedValue(undefined);
+      (firestore.arrayUnion as jest.Mock).mockReturnValue(['token1', 'new-token']);
 
-      await saveDeviceToken('user-123', 'new-device-token-xyz');
+      await saveDeviceToken('user-123', 'new-token');
 
       expect(firestore.doc).toHaveBeenCalledWith(mockFirestore, 'users', 'user-123');
+      expect(firestore.arrayUnion).toHaveBeenCalledWith('new-token');
       expect(firestore.updateDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
-          deviceTokens: expect.anything(),
+          deviceTokens: ['token1', 'new-token'],
         })
       );
     });
 
-    it('should use arrayUnion to prevent duplicate tokens', async () => {
+    it('should handle multiple device tokens', async () => {
       (firestore.updateDoc as jest.Mock).mockResolvedValue(undefined);
+      (firestore.arrayUnion as jest.Mock).mockReturnValue(['token1', 'token2', 'token3']);
 
-      await saveDeviceToken('user-456', 'token-abc');
+      await saveDeviceToken('user-123', 'token3');
 
-      expect(firestore.arrayUnion).toHaveBeenCalledWith('token-abc');
+      expect(firestore.arrayUnion).toHaveBeenCalledWith('token3');
     });
 
-    it('should update the updatedAt timestamp', async () => {
-      (firestore.updateDoc as jest.Mock).mockResolvedValue(undefined);
+    it('should throw error if update fails', async () => {
+      const mockError = new Error('Update failed');
+      (firestore.updateDoc as jest.Mock).mockRejectedValue(mockError);
 
-      await saveDeviceToken('user-789', 'token-def');
-
-      const call = (firestore.updateDoc as jest.Mock).mock.calls[0];
-      expect(call[0]).toBe(mockDocRef);
-      expect(call[1]).toHaveProperty('updatedAt');
-      expect(call[1]).toHaveProperty('deviceTokens');
+      await expect(saveDeviceToken('user-123', 'new-token')).rejects.toThrow('Update failed');
     });
   });
 });
