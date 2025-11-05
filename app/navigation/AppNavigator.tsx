@@ -7,7 +7,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useCurrentUser } from '../hooks/useUser';
 import { LoginScreen } from '../screens/LoginScreen';
+import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { BillsListScreen } from '../screens/BillsListScreen';
 import { BillDetailScreen } from '../screens/BillDetailScreen';
@@ -44,9 +46,10 @@ function MainTabs() {
 }
 
 function AppNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { userProfile, loading: profileLoading, refresh } = useCurrentUser();
 
-  if (loading) {
+  if (authLoading || (user && profileLoading)) {
     return null; // Could show a loading screen here
   }
 
@@ -55,6 +58,12 @@ function AppNavigator() {
       {!user ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
+        </Stack.Navigator>
+      ) : !userProfile ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="ProfileSetup">
+            {() => <ProfileSetupScreen onComplete={refresh} />}
+          </Stack.Screen>
         </Stack.Navigator>
       ) : (
         <Stack.Navigator>

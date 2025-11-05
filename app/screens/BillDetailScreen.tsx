@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Button } from '../components/Button';
 import { useBill, useMarkBillPaid } from '../hooks/useBills';
+import { useCurrentUser } from '../hooks/useUser';
 import type { MarkPaidPayload } from '../../types';
 
 type BillDetailRouteParams = {
@@ -33,10 +34,13 @@ export function BillDetailScreen() {
   const { billId } = route.params;
   const { bill, loading } = useBill(billId);
   const { markAsPaid, loading: marking } = useMarkBillPaid();
+  const { userProfile } = useCurrentUser();
 
   const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
   const [note, setNote] = useState('');
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
+
+  const canMarkAsPaid = userProfile?.role === 'child';
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -147,7 +151,7 @@ export function BillDetailScreen() {
             </>
           )}
 
-          {bill.status === 'pending' && (
+          {bill.status === 'pending' && canMarkAsPaid && (
             <Button
               title="Mark as Paid"
               onPress={() => setShowMarkPaidModal(true)}
