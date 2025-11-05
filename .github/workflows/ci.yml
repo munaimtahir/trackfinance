@@ -17,17 +17,13 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm install
-          else
-            echo "package.json not yet created; skipping install."
-          fi
+        run: npm install --legacy-peer-deps
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
 
       - name: Run tests
-        run: |
-          if [ -f package.json ]; then
-            npm test -- --watch=false || echo "Tests not configured yet."
-          else
-            echo "No tests to run yet."
-          fi
+        run: npm test
