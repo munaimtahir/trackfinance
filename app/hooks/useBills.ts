@@ -11,6 +11,7 @@ import {
   markBillAsPaid as markBillAsPaidService,
   getBill,
 } from '../../services/bills';
+import { getChildUserId, getFatherUserId } from '../../services/notificationHelpers';
 import { useAuth } from '../contexts/AuthContext';
 import type { Bill, BillStatus, CreateBillPayload, MarkPaidPayload } from '../../types';
 
@@ -99,7 +100,10 @@ export function useCreateBill() {
       setError(null);
 
       try {
-        const bill = await createBillService(payload, user.uid);
+        // Get child user ID for notification
+        const childUserId = await getChildUserId(user.uid);
+        
+        const bill = await createBillService(payload, user.uid, childUserId || undefined);
         setLoading(false);
         return bill;
       } catch (err) {
@@ -134,7 +138,10 @@ export function useMarkBillPaid() {
       setError(null);
 
       try {
-        await markBillAsPaidService(billId, user.uid, payload);
+        // Get father user ID for notification
+        const fatherUserId = await getFatherUserId(user.uid);
+        
+        await markBillAsPaidService(billId, user.uid, payload, fatherUserId || undefined);
         setLoading(false);
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to mark bill as paid');

@@ -21,6 +21,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseFirestore } from './firebaseApp';
 import { uploadImage, generateBillImagePath, generateReceiptImagePath } from './storage';
+import { prepareNewBillNotification, prepareBillPaidNotification, sendPushNotification } from './notifications';
 import type { Bill, BillStatus, CreateBillPayload, MarkPaidPayload } from '../types';
 
 const BILLS_COLLECTION = 'bills';
@@ -30,7 +31,8 @@ const BILLS_COLLECTION = 'bills';
  */
 export async function createBill(
   payload: CreateBillPayload,
-  userId: string
+  userId: string,
+  childUserId?: string
 ): Promise<Bill> {
   const firestore = getFirebaseFirestore();
   const billsRef = collection(firestore, BILLS_COLLECTION);
@@ -60,6 +62,19 @@ export async function createBill(
 
   // Update document with image URL
   await updateDoc(docRef, { billImageUrl });
+
+  // Send notification to child if childUserId is provided
+  if (childUserId) {
+    try {
+      const notificationPayload = await prepareNewBillNotification(billId, childUserId);
+      if (notificationPayload) {
+        await sendPushNotification(notificationPayload);
+      }
+    } catch (error) {
+      // Log error but don't fail bill creation
+      console.error('Failed to send new bill notification:', error);
+    }
+  }
 
   // Return the created bill
   return {
@@ -132,7 +147,8 @@ export function subscribeToBillsByStatus(
 export async function markBillAsPaid(
   billId: string,
   userId: string,
-  payload: MarkPaidPayload
+  payload: MarkPaidPayload,
+  fatherUserId?: string
 ): Promise<void> {
   const firestore = getFirebaseFirestore();
   const billRef = doc(firestore, BILLS_COLLECTION, billId);
@@ -151,6 +167,19 @@ export async function markBillAsPaid(
   }
 
   await updateDoc(billRef, updateData);
+
+  // Send notification to father if fatherUserId is provided
+  if (fatherUserId) {
+    try {
+      const notificationPayload = await prepareBillPaidNotification(billId, fatherUserId);
+      if (notificationPayload) {
+        await sendPushNotification(notificationPayload);
+      }
+    } catch (error) {
+      // Log error but don't fail bill update
+      console.error('Failed to send bill paid notification:', error);
+    }
+  }
 }
 
 /**

@@ -56,6 +56,23 @@ jest.mock('expo-image-picker', () => ({
   },
 }));
 
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  getPermissionsAsync: jest.fn(),
+  requestPermissionsAsync: jest.fn(),
+  getExpoPushTokenAsync: jest.fn(),
+  setNotificationChannelAsync: jest.fn(),
+  addNotificationReceivedListener: jest.fn(),
+  addNotificationResponseReceivedListener: jest.fn(),
+  AndroidImportance: {
+    MAX: 5,
+  },
+}));
+
+jest.mock('expo-device', () => ({
+  isDevice: true,
+}));
+
 // Mock React Native modules
 jest.mock('react-native', () => ({
   StyleSheet: {
