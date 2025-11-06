@@ -9,9 +9,6 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { saveDeviceToken, getUserProfile } from './users';
 
-// Track if we're in a development environment
-// (not used but kept for future feature flagging)
-
 /**
  * Configure notification handler for foreground notifications
  * Only configure if notifications are available

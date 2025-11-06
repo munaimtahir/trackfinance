@@ -11,8 +11,6 @@ import {
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-// Removed getReactNativePersistence - not available in Firebase web SDK v10
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { FirebaseConfig } from '../types';
 
 let firebaseApp: FirebaseApp | undefined;
