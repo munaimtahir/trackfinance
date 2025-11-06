@@ -66,7 +66,11 @@ export async function createBill(
   // Send notification to child if childUserId is provided
   if (childUserId) {
     try {
-      const notificationPayload = await prepareNewBillNotification(billId, childUserId);
+      const notificationPayload = await prepareNewBillNotification(
+        billId, 
+        billData.title, 
+        childUserId
+      );
       if (notificationPayload) {
         await sendPushNotification(notificationPayload);
       }
@@ -171,7 +175,15 @@ export async function markBillAsPaid(
   // Send notification to father if fatherUserId is provided
   if (fatherUserId) {
     try {
-      const notificationPayload = await prepareBillPaidNotification(billId, fatherUserId);
+      // Get bill to pass title to notification
+      const bill = await getBill(billId);
+      const billTitle = bill?.title || 'Unknown Bill';
+      
+      const notificationPayload = await prepareBillPaidNotification(
+        billId, 
+        billTitle, 
+        fatherUserId
+      );
       if (notificationPayload) {
         await sendPushNotification(notificationPayload);
       }

@@ -19,6 +19,8 @@ const mockFirestore = {} as firebaseFirestore.Firestore;
 const mockStorage = {} as firebaseStorage.FirebaseStorage;
 
 (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
+(firebaseApp.getApps as jest.Mock).mockReturnValue([]);
+(firebaseApp.getApp as jest.Mock).mockReturnValue(mockFirebaseApp);
 (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
 (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
 (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
@@ -39,6 +41,8 @@ describe('Firebase App Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv };
+    // Reset getApps to return empty array (not initialized)
+    (firebaseApp.getApps as jest.Mock).mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -148,13 +152,18 @@ describe('Firebase App Service', () => {
       process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 'test-sender-id';
       process.env.EXPO_PUBLIC_FIREBASE_APP_ID = 'test-app-id';
 
+      // First call initializes
       initializeFirebase();
       const callCountAfterFirst = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
       
-      initializeFirebase(); // Call twice
+      // Mock getApps to return an existing app (simulating already initialized)
+      (firebaseApp.getApps as jest.Mock).mockReturnValue([mockFirebaseApp]);
+      
+      // Second call should not reinitialize
+      initializeFirebase();
       const callCountAfterSecond = (firebaseApp.initializeApp as jest.Mock).mock.calls.length;
 
-      // Should only be called once more (from first call in this test)
+      // initializeApp should not be called again
       expect(callCountAfterSecond).toBe(callCountAfterFirst);
     });
   });
