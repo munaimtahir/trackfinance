@@ -84,6 +84,33 @@ npm run lint
 npm run type-check
 ```
 
+## Android Build & Health Checks
+
+Before committing code, ensure all checks pass:
+
+```bash
+# Full validation suite
+npm run type-check  # TypeScript validation
+npm run lint        # Code style and quality
+npm test            # Unit and integration tests
+npm run doctor      # Expo project health check
+npm run android:check  # Package version compatibility
+```
+
+### Common Issues and Fixes
+
+**Package version mismatches**: If `npm run doctor` reports version issues, run:
+```bash
+npx expo install --fix
+```
+
+**Build errors**: Clear Metro bundler cache:
+```bash
+npx expo start -c
+```
+
+**Test failures**: Check the error messages and ensure Firebase mocks are properly configured in `jest.setup.js`
+
 ## Project Structure
 
 ```

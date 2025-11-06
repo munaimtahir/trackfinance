@@ -9,8 +9,8 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { saveDeviceToken, getUserProfile } from './users';
 
-// Check if running in Expo Go where notifications may be limited
-const isExpoGo = !Device.isDevice || __DEV__;
+// Track if we're in a development environment
+// (not used but kept for future feature flagging)
 
 /**
  * Configure notification handler for foreground notifications
@@ -23,6 +23,8 @@ function configureNotificationHandler() {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
       }),
     });
   } catch (error) {
