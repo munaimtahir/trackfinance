@@ -2,6 +2,11 @@
  * Tests for Firebase App Service
  */
 
+import * as firebaseApp from 'firebase/app';
+import * as firebaseAuth from 'firebase/auth';
+import * as firebaseFirestore from 'firebase/firestore';
+import * as firebaseStorage from 'firebase/storage';
+
 // Mock Firebase modules with explicit factories that return jest.fn()
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
@@ -20,12 +25,6 @@ jest.mock('firebase/firestore', () => ({
 jest.mock('firebase/storage', () => ({
   getStorage: jest.fn(),
 }));
-
-// Import mocked modules
-import * as firebaseApp from 'firebase/app';
-import * as firebaseAuth from 'firebase/auth';
-import * as firebaseFirestore from 'firebase/firestore';
-import * as firebaseStorage from 'firebase/storage';
 
 // Setup mock return values
 const mockFirebaseApp = {} as firebaseApp.FirebaseApp;
