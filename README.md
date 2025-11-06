@@ -1,6 +1,10 @@
 # TrackFinance - Family Bill Tracker
 
-A private Android-first mobile app for two users (father and child) to track household bills without using WhatsApp threads.
+A production-ready Android-first mobile app for two users (father and child) to track household bills without using WhatsApp threads.
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
 
 ## Features
 
@@ -143,11 +147,34 @@ trackfinance/
 
 ## Documentation
 
-- [Setup Guide](docs/Setup.md) - Complete setup instructions
+### Getting Started
+- [Setup Guide](docs/Setup.md) - Complete development setup instructions
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
+- [Security Documentation](SECURITY.md) - Security implementation and best practices
+
+### Technical Documentation
 - [Architecture](docs/Architecture.md) - App structure and design
 - [Data Model](docs/DataModel.md) - Database schema
-- [QA Checklist](docs/QA-Checklist.md) - Feature verification
 - [Testing](docs/Tests.md) - Testing guidelines
+- [QA Checklist](docs/QA-Checklist.md) - Feature verification
+
+### Reference Files
+- [CHANGELOG](CHANGELOG.md) - Version history
+- [Firebase Rules](firestore.rules) - Firestore security rules
+- [Storage Rules](storage.rules) - Firebase Storage security rules
+
+## Deployment
+
+For production deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Quick deployment checklist:
+1. Create Firebase project and enable services
+2. Deploy Firestore and Storage security rules
+3. Configure environment variables
+4. Build Android app with EAS
+5. Test thoroughly with two devices
+
+See the full deployment guide for detailed instructions.
 
 ## Workflows
 
@@ -173,6 +200,29 @@ trackfinance/
 
 This repository is structured as an **AI-friendly dev pack**. An AI developer agent can read the docs in `docs/` and implement features following the established patterns.
 
+### For Developers
+- Follow the existing code structure and patterns
+- Run `npm run lint` and `npm run type-check` before committing
+- Ensure all tests pass with `npm test`
+- Update documentation when adding new features
+
+## Security
+
+TrackFinance implements multiple security layers:
+- Firebase Authentication for user management
+- Firestore security rules to protect user data
+- Storage rules to secure bill images
+- Role-based access control
+- Environment variable configuration
+
+See [SECURITY.md](SECURITY.md) for detailed security documentation.
+
 ## License
 
-This project is private and for personal use.
+This project is released under CC0 1.0 Universal (Public Domain). See [LICENSE](LICENSE) for details.
+
+## Version History
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+Current version: **1.0.0**
