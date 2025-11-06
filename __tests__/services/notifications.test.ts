@@ -138,20 +138,14 @@ describe('Notifications Service', () => {
 
   describe('prepareNewBillNotification', () => {
     it('should prepare notification for new bill', async () => {
-      const mockBill = {
-        id: 'bill-123',
-        title: 'Electricity Bill',
-        status: 'pending',
-      };
       const mockUser = {
         id: 'child-123',
         deviceTokens: ['token-1', 'token-2'],
       };
 
-      (billsService.getBill as jest.Mock).mockResolvedValue(mockBill);
       (usersService.getUserProfile as jest.Mock).mockResolvedValue(mockUser);
 
-      const payload = await prepareNewBillNotification('bill-123', 'child-123');
+      const payload = await prepareNewBillNotification('bill-123', 'Electricity Bill', 'child-123');
 
       expect(payload).toEqual({
         to: ['token-1', 'token-2'],
@@ -164,28 +158,23 @@ describe('Notifications Service', () => {
       });
     });
 
-    it('should return null if bill not found', async () => {
-      (billsService.getBill as jest.Mock).mockResolvedValue(null);
+    it('should return null if user not found', async () => {
+      (usersService.getUserProfile as jest.Mock).mockResolvedValue(null);
 
-      const payload = await prepareNewBillNotification('bill-123', 'child-123');
+      const payload = await prepareNewBillNotification('bill-123', 'Test Bill', 'child-123');
 
       expect(payload).toBeNull();
     });
 
     it('should return null if user has no device tokens', async () => {
-      const mockBill = {
-        id: 'bill-123',
-        title: 'Electricity Bill',
-      };
       const mockUser = {
         id: 'child-123',
         deviceTokens: [],
       };
 
-      (billsService.getBill as jest.Mock).mockResolvedValue(mockBill);
       (usersService.getUserProfile as jest.Mock).mockResolvedValue(mockUser);
 
-      const payload = await prepareNewBillNotification('bill-123', 'child-123');
+      const payload = await prepareNewBillNotification('bill-123', 'Electricity Bill', 'child-123');
 
       expect(payload).toBeNull();
     });
@@ -206,7 +195,7 @@ describe('Notifications Service', () => {
       (billsService.getBill as jest.Mock).mockResolvedValue(mockBill);
       (usersService.getUserProfile as jest.Mock).mockResolvedValue(mockUser);
 
-      const payload = await prepareBillPaidNotification('bill-123', 'father-123');
+      const payload = await prepareBillPaidNotification('bill-123', 'Gas Bill', 'father-123');
 
       expect(payload).toEqual({
         to: ['token-1'],

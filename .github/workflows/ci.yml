@@ -7,6 +7,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,3 +29,27 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  android-health:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Run Expo Doctor
+        run: npx expo-doctor --non-interactive
+        continue-on-error: true
+
+      - name: Check Expo package versions
+        run: npx expo install --check
+        continue-on-error: true

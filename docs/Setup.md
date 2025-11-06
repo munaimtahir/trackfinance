@@ -114,6 +114,35 @@ Type check:
 npm run type-check
 ```
 
+Health checks (before committing):
+```bash
+# Check Expo project configuration
+npm run doctor
+
+# Check package versions match Expo SDK
+npm run android:check
+```
+
+## Firebase Authentication in React Native
+
+The app uses Firebase Web SDK with Expo/React Native. Key implementation details:
+
+### Authentication Initialization
+- Firebase is initialized in `services/firebaseApp.ts` using `initializeApp()`
+- Auth persistence is handled automatically by Firebase Web SDK in React Native
+- The app checks `getApps().length` to prevent double-initialization during hot reloads
+- Uses `getAuth()` to get the auth instance (not `initializeAuth()` as React Native persistence isn't available in Firebase Web SDK v10)
+
+### Why Not `@react-native-firebase`?
+We use the Firebase Web SDK (`firebase` package) instead of `@react-native-firebase` because:
+- Simpler setup - no native code modifications needed
+- Works seamlessly with Expo managed workflow
+- No need to eject from Expo
+- Cross-platform code sharing between web and mobile
+
+### Auth State Persistence
+Firebase Web SDK automatically persists auth state in React Native using IndexedDB-like storage. Users stay logged in across app restarts.
+
 ## Push Notifications Setup
 
 The app uses Expo Push Notifications for real-time alerts.
@@ -128,16 +157,37 @@ The app uses Expo Push Notifications for real-time alerts.
 
 ### Testing Notifications
 
-1. **Development with Expo Go**:
-   - Install Expo Go on two physical devices (notifications don't work on simulators)
+**Important**: Push notifications in Expo Go have limitations:
+- Expo Go SDK 53+ removed Android push notification support
+- Remote notifications work only in development builds or production builds
+- The app gracefully handles missing notification APIs in Expo Go
+
+1. **Development with Expo Go** (Limited):
+   - Basic notification features work on iOS Expo Go
+   - For full testing, use a development build instead
+
+2. **Development Build** (Recommended):
+   ```bash
+   # Create development build
+   npx expo prebuild --platform android
+   npx expo run:android
+   ```
+   - Install on two physical devices
    - Sign in as father on one device and child on the other
    - Create a bill as father → child should receive notification
    - Mark bill as paid as child → father should receive notification
 
-2. **Production Build**:
+3. **Production Build**:
    - For standalone Android/iOS builds, follow [Expo's push notification setup](https://docs.expo.dev/push-notifications/push-notifications-setup/)
    - Configure FCM credentials for Android
    - Configure APNs credentials for iOS
+
+### Notification Safety
+The notification service is designed to work safely in all environments:
+- Wraps notification initialization in try-catch blocks
+- Returns `null` gracefully when notifications unavailable
+- Logs warnings instead of crashing
+- Works in Expo Go (with limited functionality) and full builds
 
 ### Alternative: Cloud Functions (Optional)
 

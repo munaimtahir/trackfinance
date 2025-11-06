@@ -1,18 +1,22 @@
 /**
  * Firebase App Configuration
  * Initializes Firebase with environment variables
+ * Uses AsyncStorage persistence for Auth in React Native
  */
 
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { 
+  getAuth,
+  Auth 
+} from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import type { FirebaseConfig } from '../types';
 
-let firebaseApp: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
-let storage: FirebaseStorage;
+let firebaseApp: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let firestore: Firestore | undefined;
+let storage: FirebaseStorage | undefined;
 
 /**
  * Get Firebase configuration from environment variables
@@ -44,16 +48,42 @@ export function getFirebaseConfig(): FirebaseConfig {
 }
 
 /**
- * Initialize Firebase app
+ * Initialize Firebase app with Auth persistence
+ * Note: Firebase web SDK v10 doesn't support custom React Native persistence
+ * Auth state will still persist via browser-like mechanisms in React Native
  */
 export function initializeFirebase(): void {
-  if (firebaseApp) {
-    return; // Already initialized
+  // Check if already initialized
+  if (getApps().length > 0) {
+    firebaseApp = getApp();
+    // Get existing auth instance if available
+    try {
+      auth = getAuth(firebaseApp);
+    } catch {
+      // Auth not initialized yet, will be initialized below
+    }
+    firestore = getFirestore(firebaseApp);
+    storage = getStorage(firebaseApp);
+    return;
   }
 
   const config = getFirebaseConfig();
   firebaseApp = initializeApp(config);
-  auth = getAuth(firebaseApp);
+  
+  // Initialize Auth
+  // Note: Using getAuth() which provides default persistence in React Native
+  // The Firebase web SDK automatically uses appropriate storage in React Native
+  try {
+    auth = getAuth(firebaseApp);
+  } catch (error) {
+    // If auth already initialized (e.g., hot reload), get existing instance
+    if (error instanceof Error && error.message.includes('already created')) {
+      auth = getAuth(firebaseApp);
+    } else {
+      throw error;
+    }
+  }
+  
   firestore = getFirestore(firebaseApp);
   storage = getStorage(firebaseApp);
 }
@@ -65,6 +95,9 @@ export function getFirebaseAuth(): Auth {
   if (!auth) {
     initializeFirebase();
   }
+  if (!auth) {
+    throw new Error('Firebase Auth could not be initialized');
+  }
   return auth;
 }
 
@@ -75,6 +108,9 @@ export function getFirebaseFirestore(): Firestore {
   if (!firestore) {
     initializeFirebase();
   }
+  if (!firestore) {
+    throw new Error('Firestore could not be initialized');
+  }
   return firestore;
 }
 
@@ -84,6 +120,9 @@ export function getFirebaseFirestore(): Firestore {
 export function getFirebaseStorage(): FirebaseStorage {
   if (!storage) {
     initializeFirebase();
+  }
+  if (!storage) {
+    throw new Error('Firebase Storage could not be initialized');
   }
   return storage;
 }

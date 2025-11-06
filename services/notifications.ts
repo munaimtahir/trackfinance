@@ -1,74 +1,93 @@
 /**
  * Notifications Service
  * Handles push notification token registration and sending notifications
+ * Safe for Expo Go (gracefully handles unavailable features)
  */
 
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { saveDeviceToken, getUserProfile } from './users';
-import { getBill } from './bills';
 
 /**
  * Configure notification handler for foreground notifications
+ * Only configure if notifications are available
  */
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+function configureNotificationHandler() {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.warn('Unable to configure notification handler:', error);
+  }
+}
+
+// Initialize notification handler
+configureNotificationHandler();
 
 /**
  * Register for push notifications and save the token
+ * Safe for Expo Go - returns null if notifications unavailable
  */
 export async function registerForPushNotifications(userId: string): Promise<string | null> {
-  if (!Device.isDevice) {
-    console.warn('Push notifications only work on physical devices');
-    return null;
-  }
+  try {
+    if (!Device.isDevice) {
+      console.warn('Push notifications only work on physical devices');
+      return null;
+    }
 
-  // Request permissions
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+    // Request permissions
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
 
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
 
-  if (finalStatus !== 'granted') {
-    console.warn('Failed to get push notification permissions');
-    return null;
-  }
+    if (finalStatus !== 'granted') {
+      console.warn('Failed to get push notification permissions');
+      return null;
+    }
 
-  // Get the Expo push token
-  const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
-  if (!projectId) {
-    console.error('EXPO_PUBLIC_FIREBASE_PROJECT_ID is not configured');
-    return null;
-  }
-  
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId,
-  });
-  const token = tokenData.data;
-
-  // Save token to user profile in Firestore
-  await saveDeviceToken(userId, token);
-
-  // Configure Android channel
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
+    // Get the Expo push token
+    const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!projectId) {
+      console.error('EXPO_PUBLIC_FIREBASE_PROJECT_ID is not configured');
+      return null;
+    }
+    
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId,
     });
-  }
+    const token = tokenData.data;
 
-  return token;
+    // Save token to user profile in Firestore
+    await saveDeviceToken(userId, token);
+
+    // Configure Android channel
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    return token;
+  } catch (error) {
+    // Gracefully handle errors (e.g., in Expo Go where remote notifications may be unavailable)
+    console.warn('Push notification registration failed (may be running in Expo Go):', error);
+    return null;
+  }
 }
 
 /**
@@ -85,18 +104,14 @@ export interface NotificationPayload {
 
 /**
  * Prepare notification payload for new bill creation
+ * Takes bill details directly to avoid circular dependency
  */
 export async function prepareNewBillNotification(
   billId: string,
+  billTitle: string,
   childUserId: string
 ): Promise<NotificationPayload | null> {
   try {
-    // Get the bill details
-    const bill = await getBill(billId);
-    if (!bill) {
-      return null;
-    }
-
     // Get child's device tokens
     const childProfile = await getUserProfile(childUserId);
     if (!childProfile || childProfile.deviceTokens.length === 0) {
@@ -106,7 +121,7 @@ export async function prepareNewBillNotification(
     return {
       to: childProfile.deviceTokens,
       title: 'New Bill Added 💰',
-      body: `New bill: ${bill.title}`,
+      body: `New bill: ${billTitle}`,
       data: {
         type: 'new_bill',
         billId,
@@ -120,18 +135,14 @@ export async function prepareNewBillNotification(
 
 /**
  * Prepare notification payload for bill marked as paid
+ * Takes bill details directly to avoid circular dependency
  */
 export async function prepareBillPaidNotification(
   billId: string,
+  billTitle: string,
   fatherUserId: string
 ): Promise<NotificationPayload | null> {
   try {
-    // Get the bill details
-    const bill = await getBill(billId);
-    if (!bill) {
-      return null;
-    }
-
     // Get father's device tokens
     const fatherProfile = await getUserProfile(fatherUserId);
     if (!fatherProfile || fatherProfile.deviceTokens.length === 0) {
@@ -141,7 +152,7 @@ export async function prepareBillPaidNotification(
     return {
       to: fatherProfile.deviceTokens,
       title: 'Bill Paid ✅',
-      body: `Bill paid: ${bill.title}`,
+      body: `Bill paid: ${billTitle}`,
       data: {
         type: 'bill_paid',
         billId,

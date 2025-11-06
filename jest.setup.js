@@ -2,9 +2,14 @@
  * Jest Setup
  */
 
+// Set up __DEV__ global for React Native
+global.__DEV__ = true;
+
 // Mock Firebase modules
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
+  getApps: jest.fn(() => []),
+  getApp: jest.fn(),
 }));
 
 jest.mock('firebase/auth', () => ({
