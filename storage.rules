@@ -1,0 +1,39 @@
+rules_version = '2';
+
+/**
+ * Firebase Storage Security Rules for TrackFinance
+ * 
+ * This file defines security rules for Firebase Storage.
+ * Deploy these rules to Firebase Console:
+ * 1. Go to Storage → Rules tab
+ * 2. Copy and paste these rules
+ * 3. Click "Publish"
+ * 
+ * Or deploy via Firebase CLI:
+ * $ firebase deploy --only storage
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the file
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Bill images - organized by user ID
+    // Path format: billImages/{userId}/{imageId}
+    match /billImages/{userId}/{allImages=**} {
+      // Anyone authenticated can read bill images (father and child both need access)
+      allow read: if isAuthenticated();
+      
+      // Users can only upload to their own folder
+      allow write: if isAuthenticated() && isOwner(userId);
+    }
+  }
+}

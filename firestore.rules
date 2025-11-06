@@ -1,0 +1,54 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules for TrackFinance
+ * 
+ * This file defines security rules for the TrackFinance app.
+ * Deploy these rules to Firebase Console:
+ * 1. Go to Firestore Database → Rules tab
+ * 2. Copy and paste these rules
+ * 3. Click "Publish"
+ * 
+ * Or deploy via Firebase CLI:
+ * $ firebase deploy --only firestore:rules
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection - stores user profiles and device tokens
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles (needed to look up device tokens)
+      allow read: if isAuthenticated();
+      
+      // Users can only write their own profile
+      allow write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Bills collection - stores household bills
+    match /bills/{billId} {
+      // Anyone authenticated can read bills (father and child both need access)
+      allow read: if isAuthenticated();
+      
+      // Any authenticated user can create a bill
+      allow create: if isAuthenticated();
+      
+      // Only the bill creator can update their bill
+      // This allows marking as paid, adding receipts, etc.
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      // No deletions allowed for audit trail
+      allow delete: if false;
+    }
+  }
+}
