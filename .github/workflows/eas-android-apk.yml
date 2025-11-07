@@ -2,6 +2,10 @@ name: Build Android APK with Expo EAS
 
 on:
   workflow_dispatch: {}  # run manually from the Actions tab
+  push:
+    branches:
+      - main
+      - 'copilot/**'  # Allow testing on copilot branches
 
 jobs:
   build:
