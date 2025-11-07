@@ -52,7 +52,12 @@ jobs:
           
           # Try to create the project or link to existing one
           # Using --id with the slug will create a project if it doesn't exist
-          npx eas project:init --id "$PROJECT_SLUG" --non-interactive 2>&1 || echo "Project may already exist or initialization not needed"
+          if ! npx eas project:init --id "$PROJECT_SLUG" --non-interactive 2>&1; then
+            echo "Note: Project initialization command failed, but this may be expected if:"
+            echo "  - Project already exists and is linked"
+            echo "  - Project needs to be created interactively first"
+            echo "Continuing with build attempt..."
+          fi
 
       # 6) Build Android APK on Expo EAS and download it
       - name: Build Android APK (preview profile)
