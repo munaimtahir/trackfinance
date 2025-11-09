@@ -48,18 +48,46 @@ jobs:
       - name: Verify Expo authentication
         run: npx eas whoami
 
-      # 6) Link this repo to the correct EAS project (fixes "EAS project not configured")
+      # 6) Ensure this repo is linked to the correct EAS project
       - name: Initialize EAS project link
         run: |
           npx eas init --id $EAS_PROJECT_ID --non-interactive
 
-      # 7) Build Android APK on Expo EAS and download it
-      - name: Build Android APK (preview profile)
+      # 7) Install jq (for parsing JSON)
+      - name: Install jq
         run: |
-          npx eas build --platform android --profile preview --non-interactive --wait
-          npx eas build:download --platform android --latest --output app-release.apk
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-      # 8) Upload the built APK as a GitHub artifact
+      # 8) Build Android APK and download it from EAS
+      - name: Build Android APK (preview profile) and download artifact
+        run: |
+          # Start build and wait for completion
+          npx eas build --platform android --profile preview --non-interactive --wait
+
+          # Get latest finished Android build for this profile as JSON
+          BUILDS_JSON=$(npx eas build:list \
+            --platform android \
+            --profile preview \
+            --status finished \
+            --limit 1 \
+            --json \
+            --non-interactive)
+
+          echo "$BUILDS_JSON" > builds.json
+
+          # Extract the APK URL from artifacts.buildUrl
+          BUILD_URL=$(echo "$BUILDS_JSON" | jq -r '.[0].artifacts.buildUrl')
+
+          if [ -z "$BUILD_URL" ] || [ "$BUILD_URL" = "null" ]; then
+            echo "Could not find buildUrl in EAS build:list output"
+            exit 1
+          fi
+
+          echo "Downloading APK from $BUILD_URL"
+          curl -L "$BUILD_URL" -o app-release.apk
+
+      # 9) Upload the APK as a GitHub artifact
       - name: Upload APK as GitHub artifact
         uses: actions/upload-artifact@v4
         with:
