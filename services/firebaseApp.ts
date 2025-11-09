@@ -6,7 +6,8 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
-  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
   Auth 
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
@@ -48,20 +49,15 @@ export function getFirebaseConfig(): FirebaseConfig {
 }
 
 /**
- * Initialize Firebase app with Auth persistence
- * Note: Firebase web SDK v10 doesn't support custom React Native persistence
- * Auth state will still persist via browser-like mechanisms in React Native
+ * Initialize Firebase app with Auth persistence for React Native
+ * Uses initializeAuth with indexedDBLocalPersistence for proper React Native support
+ * This fixes the "Component auth has not been registered yet" error
  */
 export function initializeFirebase(): void {
   // Check if already initialized
   if (getApps().length > 0) {
     firebaseApp = getApp();
-    // Get existing auth instance if available
-    try {
-      auth = getAuth(firebaseApp);
-    } catch {
-      // Auth not initialized yet, will be initialized below
-    }
+    // Auth should already be initialized, just retrieve the instances
     firestore = getFirestore(firebaseApp);
     storage = getStorage(firebaseApp);
     return;
@@ -70,15 +66,18 @@ export function initializeFirebase(): void {
   const config = getFirebaseConfig();
   firebaseApp = initializeApp(config);
   
-  // Initialize Auth
-  // Note: Using getAuth() which provides default persistence in React Native
-  // The Firebase web SDK automatically uses appropriate storage in React Native
+  // Initialize Auth with indexedDB persistence
+  // Using initializeAuth instead of getAuth fixes the "Component auth has not been registered" error
+  // in React Native environments
   try {
-    auth = getAuth(firebaseApp);
+    auth = initializeAuth(firebaseApp, {
+      persistence: indexedDBLocalPersistence,
+    });
   } catch (error) {
-    // If auth already initialized (e.g., hot reload), get existing instance
+    // If auth already initialized (e.g., hot reload), this is expected
+    // The auth instance is already stored in the module variable
     if (error instanceof Error && error.message.includes('already created')) {
-      auth = getAuth(firebaseApp);
+      // Auth is already initialized, no action needed
     } else {
       throw error;
     }

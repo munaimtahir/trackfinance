@@ -15,7 +15,8 @@ jest.mock('firebase/app', () => ({
 }));
 
 jest.mock('firebase/auth', () => ({
-  getAuth: jest.fn(),
+  initializeAuth: jest.fn(),
+  indexedDBLocalPersistence: {},
 }));
 
 jest.mock('firebase/firestore', () => ({
@@ -32,6 +33,9 @@ const mockAuth = {} as firebaseAuth.Auth;
 const mockFirestore = {} as firebaseFirestore.Firestore;
 const mockStorage = {} as firebaseStorage.FirebaseStorage;
 
+// Access mocked functions
+const firebaseAuthMock = jest.requireMock('firebase/auth');
+
 describe('Firebase App Service', () => {
   const originalEnv = process.env;
 
@@ -46,7 +50,7 @@ describe('Firebase App Service', () => {
     (firebaseApp.getApps as jest.Mock).mockReturnValue([]);
     (firebaseApp.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
     (firebaseApp.getApp as jest.Mock).mockReturnValue(mockFirebaseApp);
-    (firebaseAuth.getAuth as jest.Mock).mockReturnValue(mockAuth);
+    firebaseAuthMock.initializeAuth.mockReturnValue(mockAuth);
     (firebaseFirestore.getFirestore as jest.Mock).mockReturnValue(mockFirestore);
     (firebaseStorage.getStorage as jest.Mock).mockReturnValue(mockStorage);
   });
@@ -104,7 +108,12 @@ describe('Firebase App Service', () => {
         initializeFirebase();
 
         expect(firebaseApp.initializeApp).toHaveBeenCalled();
-        expect(firebaseAuth.getAuth).toHaveBeenCalledWith(mockFirebaseApp);
+        expect(firebaseAuthMock.initializeAuth).toHaveBeenCalledWith(
+          mockFirebaseApp,
+          expect.objectContaining({
+            persistence: expect.anything(),
+          })
+        );
         expect(firebaseFirestore.getFirestore).toHaveBeenCalledWith(mockFirebaseApp);
         expect(firebaseStorage.getStorage).toHaveBeenCalledWith(mockFirebaseApp);
       });
