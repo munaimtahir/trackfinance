@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Expo auth (from GitHub Secrets)
+      # Expo authentication (GitHub Secrets)
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      # Expo / EAS project ID (UUID) – NEW
+      # Expo / EAS project UUID (GitHub Secret)
       EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
 
-      # Firebase config (from GitHub Secrets)
+      # Firebase configuration (GitHub Secrets)
       EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
       EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
       EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
@@ -23,7 +23,7 @@ jobs:
       EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
 
     steps:
-      # 1) Check out repo code
+      # 1) Check out the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -34,27 +34,32 @@ jobs:
           node-version: 20
           cache: npm
 
-      # 3) Install project dependencies and EAS CLI
+      # 3) Install dependencies and EAS CLI
       - name: Install dependencies
         run: |
           npm ci || npm install
           npm install -g eas-cli
 
-      # 4) (Optional but useful) Show resolved Expo config for debugging
+      # 4) (Optional) Show public Expo config for debugging
       - name: Show Expo public config
         run: npx expo config --type public
 
-      # 5) Confirm Expo auth via token
+      # 5) Verify Expo authentication
       - name: Verify Expo authentication
         run: npx eas whoami
 
-      # 6) Build Android APK on Expo EAS and download it
+      # 6) Link this repo to the correct EAS project (fixes "EAS project not configured")
+      - name: Initialize EAS project link
+        run: |
+          npx eas init --id $EAS_PROJECT_ID --non-interactive
+
+      # 7) Build Android APK on Expo EAS and download it
       - name: Build Android APK (preview profile)
         run: |
           npx eas build --platform android --profile preview --non-interactive --wait
           npx eas build:download --platform android --latest --output app-release.apk
 
-      # 7) Upload APK as artifact so you can download it from GitHub
+      # 8) Upload the built APK as a GitHub artifact
       - name: Upload APK as GitHub artifact
         uses: actions/upload-artifact@v4
         with:
