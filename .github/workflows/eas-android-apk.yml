@@ -10,6 +10,10 @@ jobs:
     env:
       # Expo auth (from GitHub Secrets)
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # Expo / EAS project ID (UUID) – NEW
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+
       # Firebase config (from GitHub Secrets)
       EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
       EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -28,6 +32,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       # 3) Install project dependencies and EAS CLI
       - name: Install dependencies
@@ -35,17 +40,21 @@ jobs:
           npm ci || npm install
           npm install -g eas-cli
 
-      # 4) Confirm Expo auth via token
+      # 4) (Optional but useful) Show resolved Expo config for debugging
+      - name: Show Expo public config
+        run: npx expo config --type public
+
+      # 5) Confirm Expo auth via token
       - name: Verify Expo authentication
         run: npx eas whoami
 
-      # 5) Build Android APK on Expo EAS and download it
+      # 6) Build Android APK on Expo EAS and download it
       - name: Build Android APK (preview profile)
         run: |
           npx eas build --platform android --profile preview --non-interactive --wait
           npx eas build:download --platform android --latest --output app-release.apk
 
-      # 6) Upload APK as artifact so you can download it from GitHub
+      # 7) Upload APK as artifact so you can download it from GitHub
       - name: Upload APK as GitHub artifact
         uses: actions/upload-artifact@v4
         with:
