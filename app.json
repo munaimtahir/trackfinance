@@ -27,6 +27,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "projectId": "b82ee67c-f187-4dc9-9e07-9103ec5f4344"
+    "projectId": "b82ee67c-f187-4dc9-9e07-9103ec5f4344",
+    "extra": {
+      "eas": {
+        "projectId": "b82ee67c-f187-4dc9-9e07-9103ec5f4344"
+      }
+    },
+    "owner": "munaim"
   }
 }
