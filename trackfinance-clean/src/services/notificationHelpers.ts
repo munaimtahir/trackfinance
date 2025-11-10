@@ -4,8 +4,8 @@
  */
 
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { getFirebaseFirestore } from './firebaseApp';
-import type { UserRole } from '../types';
+import { db } from '../config/firebase';
+import type { UserRole } from '../../types';
 
 /**
  * Get the other user (child if current is father, or father if current is child)
@@ -13,8 +13,7 @@ import type { UserRole } from '../types';
  */
 export async function getOtherUser(currentUserId: string, targetRole: UserRole): Promise<string | null> {
   try {
-    const firestore = getFirebaseFirestore();
-    const usersRef = collection(firestore, 'users');
+    const usersRef = collection(db, 'users');
     
     // Query for a user with the target role (the query will return users,
     // and we'll filter out the current user below since Firestore doesn't

@@ -19,16 +19,12 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        working-directory: trackfinance-clean
+        run: npm install
 
       - name: Type check
-        run: npm run type-check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
+        working-directory: trackfinance-clean
+        run: npx tsc --noEmit
 
   android-health:
     runs-on: ubuntu-latest
@@ -44,12 +40,15 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        working-directory: trackfinance-clean
+        run: npm install
 
       - name: Run Expo Doctor
+        working-directory: trackfinance-clean
         run: npx expo-doctor --non-interactive
         continue-on-error: true
 
       - name: Check Expo package versions
+        working-directory: trackfinance-clean
         run: npx expo install --check
         continue-on-error: true

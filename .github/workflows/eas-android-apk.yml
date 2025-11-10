@@ -37,46 +37,50 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: trackfinance-clean/package-lock.json
 
       # 3) Install dependencies and EAS CLI
       - name: Install dependencies
+        working-directory: trackfinance-clean
         run: |
           npm ci || npm install
           npm install -g eas-cli
 
       # 4) (Optional) Show public Expo config for debugging
       - name: Show Expo public config
+        working-directory: trackfinance-clean
         run: npx expo config --type public
 
       # 5) Verify Expo authentication
       - name: Verify Expo authentication
         run: npx eas whoami
 
-      # 5) Create or link EAS project
-      - name: Create/link EAS project
-        run: |
-          # Get the project slug from app.json
-          PROJECT_SLUG=$(node -e "console.log(require('./app.json').expo.slug)")
-          echo "Project slug: $PROJECT_SLUG"
-          
-          # Try to create the project or link to existing one
-          # Using --id with the slug will create a project if it doesn't exist
-          if ! npx eas project:init --id "$PROJECT_SLUG" --non-interactive 2>&1; then
-            echo "Note: Project initialization command failed, but this may be expected if:"
-            echo "  - Project already exists and is linked"
-            echo "  - Project needs to be created interactively first"
-            echo "Continuing with build attempt..."
-          fi
-
       # 6) Build Android APK on Expo EAS and download it
       - name: Build Android APK (preview profile)
+        working-directory: trackfinance-clean
         run: |
           # Start build and wait for completion
           npx eas build --platform android --profile preview --non-interactive --wait
 
-      # 7) Upload APK as artifact so you can download it from GitHub
+      # 7) Download and upload APK as artifact
+      - name: Download and upload APK
+        working-directory: trackfinance-clean
+        run: |
+          # Get the latest build artifact URL
+          BUILD_URL=$(npx eas build:list --platform android --limit 1 --json --non-interactive | jq -r '.[0].artifacts.buildUrl')
+          echo "Build URL: $BUILD_URL"
+          
+          # Download the APK
+          if [ -n "$BUILD_URL" ] && [ "$BUILD_URL" != "null" ]; then
+            curl -L -o trackfinance.apk "$BUILD_URL"
+          else
+            echo "Warning: Could not get build URL"
+          fi
+
       - name: Upload APK as GitHub artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: trackfinance-apk
-          path: app-release.apk
+          path: trackfinance-clean/trackfinance.apk
+          if-no-files-found: warn

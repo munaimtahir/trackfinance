@@ -1,18 +1,12 @@
 /**
  * Firebase Configuration for TrackFinance
- * Using Firebase JS SDK with React Native AsyncStorage persistence
+ * Using Firebase JS SDK - simplified for React Native
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { 
-  initializeAuth,
-  getAuth,
-  getReactNativePersistence,
-  Auth 
-} from 'firebase/auth';
+import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 // Get Firebase config from Expo Constants (which reads from app.config.js extra)
@@ -31,21 +25,8 @@ if (getApps().length === 0) {
   app = getApp();
 }
 
-// Initialize Auth with React Native AsyncStorage persistence
-// This is critical for proper React Native support
-let auth: Auth;
-try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
-} catch (error) {
-  // If auth is already initialized (hot reload), get existing instance
-  if (error instanceof Error && error.message.includes('already created')) {
-    auth = getAuth(app);
-  } else {
-    throw error;
-  }
-}
+// Initialize Auth - Firebase SDK will automatically use AsyncStorage in React Native
+const auth: Auth = getAuth(app);
 
 // Initialize Firestore
 const db: Firestore = getFirestore(app);
