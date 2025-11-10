@@ -2,6 +2,25 @@
 
 A production-ready Android-first mobile app for two users (father and child) to track household bills without using WhatsApp threads.
 
+> ## ⚠️ IMPORTANT: Clean App Migration
+> 
+> **A new clean version of this app has been created to fix Android APK crashes!**
+> 
+> ### 🎯 For Developers:
+> - **New Primary App**: Use `trackfinance-clean/` directory for all development
+> - **Old App**: Root directory kept for reference only
+> - **Documentation**: See [`CLEAN_APP_GUIDE.md`](CLEAN_APP_GUIDE.md) for quick start
+> - **Technical Details**: See [`MIGRATION_NOTES.md`](MIGRATION_NOTES.md) for full migration documentation
+> 
+> ### 🚀 Quick Start (Clean App):
+> ```bash
+> cd trackfinance-clean
+> npm install
+> npm start
+> ```
+> 
+> All features from the original app have been migrated to the clean version with improved Firebase configuration and architecture.
+
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
